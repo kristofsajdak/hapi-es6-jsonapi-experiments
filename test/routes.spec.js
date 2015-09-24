@@ -1,5 +1,5 @@
 const hh = require('../lib/routes'),
-    A = require('joi'),
+    Joi = require('joi'),
     Code = require('code'),
     Lab = require('lab'),
     Hapi = require('hapi'),
@@ -12,14 +12,18 @@ var lab = exports.lab = Lab.script()
 const schema = {
     type: 'brands',
     attributes: {
-        code: A.string().min(2).max(10),
-        description: A.string()
+        code: Joi.string().min(2).max(10),
+        description: Joi.string()
     }
 }
 
-lab.experiment('hh.get is called', ()=> {
+lab.experiment('hh.get is invoked with a schema and handler,', ()=> {
 
-    const route = hh.get(schema)
+    function handler(req, reply) {
+        reply()
+    }
+
+    const route = hh.get(schema, handler)
 
     lab.experiment('the route config/validate section', ()=> {
 
@@ -43,11 +47,7 @@ lab.experiment('hh.get is called', ()=> {
 
     })
 
-    lab.experiment('result can be registered with a hapi server', ()=> {
-
-        route.handler = function (req, reply) {
-            reply()
-        }
+    lab.experiment('result can be registered with a hapi buildServer', ()=> {
 
         var server = new Hapi.Server()
         server.connection()
@@ -86,9 +86,23 @@ lab.experiment('hh.get is called', ()=> {
 
 })
 
-lab.experiment('hh.post is called,', ()=> {
+const validBrand = {
+    data: {
+        type: 'brands',
+        attributes: {
+            code: 'MF',
+            description: 'Massey Ferguson'
+        }
+    }
+}
 
-    const route = hh.post(schema)
+lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
+
+    function handler(req, reply) {
+        reply('').code(201)
+    }
+
+    const route = hh.post(schema, handler)
 
     lab.experiment('the route config/validate section', ()=> {
 
@@ -111,28 +125,11 @@ lab.experiment('hh.post is called,', ()=> {
         })
     })
 
-    lab.experiment('result can be registered with a hapi server', ()=> {
-
-        route.handler = function (req, reply) {
-            reply('').code(201)
-        }
-
-        var server = new Hapi.Server()
-        server.connection()
-        server.route(route)
-
-        const validBrand = {
-            data: {
-                type: 'brands',
-                attributes: {
-                    code: 'MF',
-                    description: 'Massey Ferguson'
-                }
-            }
-        }
+    lab.experiment('result can be registered with a hapi buildServer', ()=> {
 
         lab.test('post with a valid payload returns success', (done)=> {
-            server.inject({url:'/brands', method:'POST', payload:validBrand}, function (res) {
+            const server = buildServer(route);
+            server.inject({url: '/brands', method: 'POST', payload: validBrand}, function (res) {
                 expect(res.statusCode).to.equal(201)
                 done()
             })
@@ -140,7 +137,8 @@ lab.experiment('hh.post is called,', ()=> {
 
         lab.test('post with a valid payload and a client generated id returns success', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.id', uuid.v4())
-            server.inject({url:'/brands', method:'POST', payload:invalidBrand}, function (res) {
+            const server = buildServer(route);
+            server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(201)
                 done()
             })
@@ -148,7 +146,8 @@ lab.experiment('hh.post is called,', ()=> {
 
         lab.test('post with non declared attribute fails with a 400', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.bogus', 'foobar')
-            server.inject({url:'/brands', method:'POST', payload:invalidBrand}, function (res) {
+            const server = buildServer(route);
+            server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(400)
                 done()
             })
@@ -156,7 +155,8 @@ lab.experiment('hh.post is called,', ()=> {
 
         lab.test('post with an invalid attribute value fails with a 400', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.code', 'M')
-            server.inject({url:'/brands', method:'POST', payload:invalidBrand}, function (res) {
+            const server = buildServer(route);
+            server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(400)
                 done()
             })
@@ -165,3 +165,36 @@ lab.experiment('hh.post is called,', ()=> {
     })
 
 })
+
+lab.experiment('hh.post is invoked with a schema, handler and routeConfig overrides.', ()=> {
+
+        lab.test('a config/bind override is respected', (done) => {
+
+            function handler(req, reply) {
+                reply(this.message).code(201)
+            }
+
+            var route = hh.post(schema, {
+                handler,
+                config: {
+                    bind: {
+                        message: 'foobar'
+                    }
+                }
+            })
+
+            const server = buildServer(route);
+
+            server.inject({url: '/brands', method: 'POST', payload: validBrand}, function (res) {
+                expect(res.result).to.equal('foobar')
+                done()
+            })
+        })
+})
+
+function buildServer(route) {
+    const server = new Hapi.Server()
+    server.connection()
+    server.route(route)
+    return server;
+}

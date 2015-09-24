@@ -49,9 +49,7 @@ lab.experiment('hh.get is invoked with a schema and handler,', ()=> {
 
     lab.experiment('result can be registered with a hapi buildServer', ()=> {
 
-        var server = new Hapi.Server()
-        server.connection()
-        server.route(route)
+        const server = buildServer(route)
 
         lab.test('query with a valid id works', (done)=> {
             server.inject(`/brands?id=${uuid.v4()}`, function (res) {
@@ -127,8 +125,9 @@ lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
 
     lab.experiment('result can be registered with a hapi buildServer', ()=> {
 
+        const server = buildServer(route);
+
         lab.test('post with a valid payload returns success', (done)=> {
-            const server = buildServer(route);
             server.inject({url: '/brands', method: 'POST', payload: validBrand}, function (res) {
                 expect(res.statusCode).to.equal(201)
                 done()
@@ -137,7 +136,6 @@ lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
 
         lab.test('post with a valid payload and a client generated id returns success', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.id', uuid.v4())
-            const server = buildServer(route);
             server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(201)
                 done()
@@ -146,7 +144,6 @@ lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
 
         lab.test('post with non declared attribute fails with a 400', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.bogus', 'foobar')
-            const server = buildServer(route);
             server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(400)
                 done()
@@ -155,7 +152,6 @@ lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
 
         lab.test('post with an invalid attribute value fails with a 400', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.code', 'M')
-            const server = buildServer(route);
             server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(400)
                 done()

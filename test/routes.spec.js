@@ -1,4 +1,4 @@
-const hh = require('../lib/routes'),
+const hhroutes = require('../lib/routes'),
     Joi = require('joi'),
     Code = require('code'),
     Lab = require('lab'),
@@ -17,13 +17,15 @@ const schema = {
     }
 }
 
-lab.experiment('hh.get is invoked with a schema and handler,', ()=> {
+var routes = hhroutes({});
+
+lab.experiment('routes.get is invoked with an hh schema and noop handler,', ()=> {
 
     function handler(req, reply) {
         reply()
     }
 
-    const route = hh.get(schema, handler)
+    const route = routes.get(schema, {handler})
 
     lab.experiment('the route config/validate section', ()=> {
 
@@ -51,28 +53,28 @@ lab.experiment('hh.get is invoked with a schema and handler,', ()=> {
 
         const server = buildServer(route)
 
-        lab.test('query with a valid id works', (done)=> {
+        lab.test('query with a valid id passes validation', (done)=> {
             server.inject(`/brands?id=${uuid.v4()}`, function (res) {
                 expect(res.statusCode).to.equal(200)
                 done()
             })
         })
 
-        lab.test('query with an invalid id returns a 400', (done)=> {
+        lab.test('query with an invalid id fails validation', (done)=> {
             server.inject('/brands?id=foobar', function (res) {
                 expect(res.statusCode).to.equal(400)
                 done()
             })
         })
 
-        lab.test('query with a valid code returns a 200', (done)=> {
+        lab.test('query with a valid code passes validation', (done)=> {
             server.inject('/brands?code=1234', function (res) {
                 expect(res.statusCode).to.equal(200)
                 done()
             })
         })
 
-        lab.test('query with unknowns are allowed', (done)=> {
+        lab.test('query with unknowns parameters passes validation', (done)=> {
             server.inject('/brands?foo=bar', function (res) {
                 expect(res.statusCode).to.equal(200)
                 done()
@@ -94,13 +96,13 @@ const validBrand = {
     }
 }
 
-lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
+lab.experiment('post is invoked with an hh schema and noop handler,', ()=> {
 
     function handler(req, reply) {
         reply('').code(201)
     }
 
-    const route = hh.post(schema, handler)
+    const route = routes.post(schema, {handler})
 
     lab.experiment('the route config/validate section', ()=> {
 
@@ -127,14 +129,14 @@ lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
 
         const server = buildServer(route);
 
-        lab.test('post with a valid payload returns success', (done)=> {
+        lab.test('post with a valid payload passes validation', (done)=> {
             server.inject({url: '/brands', method: 'POST', payload: validBrand}, function (res) {
                 expect(res.statusCode).to.equal(201)
                 done()
             })
         })
 
-        lab.test('post with a valid payload and a client generated id returns success', (done)=> {
+        lab.test('post with a valid payload and a client generated id passes validation', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.id', uuid.v4())
             server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(201)
@@ -142,7 +144,7 @@ lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
             })
         })
 
-        lab.test('post with non declared attribute fails with a 400', (done)=> {
+        lab.test('post with non declared attribute fails validation', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.bogus', 'foobar')
             server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(400)
@@ -150,7 +152,7 @@ lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
             })
         })
 
-        lab.test('post with an invalid attribute value fails with a 400', (done)=> {
+        lab.test('post with an invalid attribute value fails validation', (done)=> {
             const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.code', 'M')
             server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
                 expect(res.statusCode).to.equal(400)
@@ -162,7 +164,7 @@ lab.experiment('hh.post is invoked with a schema and handler,', ()=> {
 
 })
 
-lab.experiment('hh.post is invoked with a schema, handler and routeConfig overrides.', ()=> {
+lab.experiment('routes.post is invoked with a schema, handler and routeConfig overrides.', ()=> {
 
         lab.test('a config/bind override is respected', (done) => {
 
@@ -170,7 +172,7 @@ lab.experiment('hh.post is invoked with a schema, handler and routeConfig overri
                 reply(this.message).code(201)
             }
 
-            var route = hh.post(schema, {
+            var route = routes.post(schema, {
                 handler,
                 config: {
                     bind: {

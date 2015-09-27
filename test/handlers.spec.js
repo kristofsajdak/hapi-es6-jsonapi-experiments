@@ -146,6 +146,48 @@ lab.experiment('register an hh get route,', ()=> {
 
 })
 
+lab.experiment('register an hh post route,', ()=> {
+
+    const route = hh.routes.post(schema)
+
+    const Brands = hh.models['brands'];
+
+    lab.before((done)=> {
+        mongoose.connect('mongodb://localhost/test', function (err) {
+            if (err)done(err)
+            else done()
+        })
+    })
+
+    lab.after((done)=> {
+        Brands.remove(function () {
+            mongoose.disconnect(done);
+        });
+    })
+
+    lab.test('create a brand', (done)=> {
+        var server = buildServer(route);
+
+        const mf = {
+            attributes: {
+                code: 'MF',
+                description: 'Massey Furgeson'
+            }
+        };
+
+        server.inject({url: `/brands`, method:'POST', payload: {data: mf}}, function (res) {
+            expect(res.statusCode).to.equal(201)
+            expect(res.result.data.id).to.not.be.undefined
+            expect(res.result.data.attributes).to.deep.equal(mf.attributes)
+            done()
+        })
+
+    })
+
+
+})
+
+
 function buildServer(route) {
     const server = new Hapi.Server()
     server.connection()

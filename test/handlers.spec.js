@@ -11,7 +11,6 @@ const hh = require('../'),
 
 chai.use(require('chai-things'))
 
-
 var lab = exports.lab = Lab.script()
 
 const schema = {
@@ -183,7 +182,6 @@ lab.experiment('register an hh post route,', ()=> {
         })
 
     })
-
 
 })
 

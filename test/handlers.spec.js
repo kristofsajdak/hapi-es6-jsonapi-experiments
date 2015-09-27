@@ -9,7 +9,6 @@ const hh = require('../'),
     mongoose = require('mongoose'),
     converters = hh.converters
 
-chai.should()
 chai.use(require('chai-things'))
 
 

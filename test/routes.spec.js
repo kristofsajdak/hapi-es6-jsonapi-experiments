@@ -1,10 +1,10 @@
 const hhroutes = require('../lib/routes'),
     Joi = require('joi'),
-    Code = require('code'),
     Lab = require('lab'),
     Hapi = require('hapi'),
     _ = require('lodash'),
-    expect = Code.expect,
+    chai = require('chai'),
+    expect = chai.expect,
     uuid = require('node-uuid')
 
 var lab = exports.lab = Lab.script()
@@ -32,18 +32,18 @@ lab.experiment('routes.get is invoked with an hh schema and noop handler,', ()=>
         const query = route.config.validate.query
 
         lab.test('has a query block defined', (done)=> {
-            expect(query).to.not.be.undefined()
+            expect(query).to.not.be.undefined
             done()
         })
 
         lab.test('is defined with an id', (done)=> {
-            expect(query.id).to.not.be.undefined()
+            expect(query.id).to.not.be.undefined
             done()
         })
 
         lab.test('is defined with all schema attributes', (done)=> {
-            expect(query.code).to.not.be.undefined()
-            expect(query.description).to.not.be.undefined()
+            expect(query.code).to.not.be.undefined
+            expect(query.description).to.not.be.undefined
             done()
         })
 
@@ -109,18 +109,18 @@ lab.experiment('post is invoked with an hh schema and noop handler,', ()=> {
         const payload = route.config.validate.payload
 
         lab.test('has a payload object defined', (done)=> {
-            expect(payload).to.not.be.undefined()
+            expect(payload).to.not.be.undefined
             done()
         })
 
         lab.test('is defined with an id', (done)=> {
-            expect(payload.data.attributes.id).to.not.be.undefined()
+            expect(payload.data.attributes.id).to.not.be.undefined
             done()
         })
 
         lab.test('is defined with all schema attributes', (done)=> {
-            expect(payload.data.attributes.code).to.not.be.undefined()
-            expect(payload.data.attributes.description).to.not.be.undefined()
+            expect(payload.data.attributes.code).to.not.be.undefined
+            expect(payload.data.attributes.description).to.not.be.undefined
             done()
         })
     })

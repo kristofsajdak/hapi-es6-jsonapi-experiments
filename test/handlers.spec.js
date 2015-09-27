@@ -1,13 +1,16 @@
 const hh = require('../'),
     Joi = require('joi'),
-    Code = require('code'),
     Lab = require('lab'),
     Hapi = require('hapi'),
     _ = require('lodash'),
-    expect = Code.expect,
+    chai = require('chai'),
+    expect = chai.expect,
     uuid = require('node-uuid'),
     mongoose = require('mongoose'),
     converters = hh.converters
+
+chai.should()
+chai.use(require('chai-things'))
 
 
 var lab = exports.lab = Lab.script()
@@ -23,36 +26,49 @@ const schema = {
 
 lab.experiment('convert an hh schema to mongoose model', ()=> {
 
-    lab.test.skip('attributes are transferred as is', (done)=> {
+    lab.test('attributes are transferred as is', (done)=> {
+
+        // clean up existing models and schemas as they might have already been registered through hh
+        delete mongoose.models['brands'];
+        delete mongoose.modelSchemas['brands'];
+
         var model = converters.toMongooseModel(schema);
-        expect(model).to.not.be.undefined()
-        expect(model.schema.paths['attributes.code']).to.not.be.undefined()
-        expect(model.schema.paths['attributes.description']).to.not.be.undefined()
+        expect(model).to.not.be.undefined
+        expect(model.schema.paths['attributes.code']).to.not.be.undefined
+        expect(model.schema.paths['attributes.description']).to.not.be.undefined
         done()
 
     })
 
 })
 
-lab.experiment('register an hh get route', ()=> {
+lab.experiment('register an hh get route,', ()=> {
 
     const route = hh.routes.get(schema)
 
-    var id = uuid.v4();
-
-    var mf = {
-        _id: id,
+    const mfId = uuid.v4();
+    const mf = {
+        _id: mfId,
         attributes: {
             code: 'MF',
             description: 'Massey Furgeson'
         }
     };
 
-    var Brands = hh.models['brands'];
+    const valtraId = uuid.v4();
+    const valtra = {
+        _id: valtraId,
+        attributes: {
+            code: 'VT',
+            description: 'Valtra'
+        }
+    };
+
+    const Brands = hh.models['brands'];
 
     lab.before((done)=> {
         mongoose.connect('mongodb://localhost/test', function (err) {
-            Brands.create(mf, function (err, result) {
+            Brands.create(mf, valtra, function (err, result) {
                 if (err)done(err)
                 else done()
             })
@@ -65,31 +81,71 @@ lab.experiment('register an hh get route', ()=> {
         });
     })
 
-    lab.test('query with an existing id returns result', (done)=> {
+    lab.test('query with an existing mf id returns 1 result', (done)=> {
         var server = buildServer(route);
 
-        server.inject({url: `/brands?filter.id=${id}`}, function (res) {
-            expect(res.result).to.deep.equal({data: converters.toJsonApi([mf])})
+        server.inject({url: `/brands?filter.id=${mfId}`}, function (res) {
             expect(res.statusCode).to.equal(200)
+            expect(res.result.data).to.deep.equal(converters.toJsonApi([mf]))
             done()
         })
 
     })
 
-    // todo add tests for array id value
+    lab.test('query with an array of 2 existing mf and valtra ids returns 2 results', (done)=> {
+        var server = buildServer(route);
+
+        server.inject({url: `/brands?filter.id=${mfId},${valtraId}`}, function (res) {
+            expect(res.statusCode).to.equal(200)
+            expect(res.result.data).to.include.something.that.deep.equals(converters.toJsonApi(mf))
+            expect(res.result.data).to.include.something.that.deep.equals(converters.toJsonApi(valtra))
+            done()
+        })
+    })
 
     lab.test('query with an attribute works', (done)=> {
         var server = buildServer(route);
 
         server.inject({url: `/brands?filter.code=MF`}, function (res) {
-            expect(res.result).to.deep.equal({data: converters.toJsonApi([mf])})
             expect(res.statusCode).to.equal(200)
+            expect(res.result.data).to.deep.equal(converters.toJsonApi([mf]))
             done()
         })
 
     })
 
-    // todo add tests for array attribute value
+    lab.test('query with an array of 2 existing mf and valtra codes returns 2 results', (done)=> {
+        var server = buildServer(route);
+
+        server.inject({url: `/brands?filter.code=MF,VT`}, function (res) {
+            expect(res.statusCode).to.equal(200)
+            expect(res.result.data).to.include.something.that.deep.equals(converters.toJsonApi(mf))
+            expect(res.result.data).to.include.something.that.deep.equals(converters.toJsonApi(valtra))
+            done()
+        })
+    })
+
+    lab.test('query with a combination of 2 predicates, an existing mf code and id, returns 1 result', (done)=> {
+        var server = buildServer(route);
+
+        server.inject({url: `/brands?filter.id=${mfId}&filter.code=MF`}, function (res) {
+            expect(res.statusCode).to.equal(200)
+            expect(res.result.data).to.deep.equal(converters.toJsonApi([mf]))
+            done()
+        })
+    })
+
+    lab.test('query with a combination of 2 predicates, an existing mf code and a non existing id, returns an empty result set', (done)=> {
+        var server = buildServer(route);
+
+        server.inject({url: `/brands?filter.id=12345678&filter.code=MF`}, function (res) {
+            expect(res.statusCode).to.equal(200)
+            expect(res.result.data).to.be.empty
+            done()
+        })
+    })
+
+
 
 })
 

@@ -90,8 +90,9 @@ lab.experiment('plugin', ()=> {
                 .then((created)=> {
                     server.inject({url: `/brands?code=MF`}, function (res) {
                         expect(res.statusCode).to.equal(200)
-                        console.log(res.result)
-                        expect(res.result.data[0].attributes).to.deep.equal(mf.attributes)
+                        var data = res.result.data[0];
+                        expect(data.id).to.equal(created._id)
+                        expect(data.attributes).to.deep.equal(mf.attributes)
                         done()
                     })
                 })

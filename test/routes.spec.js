@@ -164,7 +164,7 @@ lab.experiment('post is invoked with an hh schema and noop handler,', ()=> {
 
 })
 
-lab.experiment('routes.post is invoked with a schema, handler and routeConfig overrides.', ()=> {
+lab.experiment('routes.post is invoked with a schema, handler and routeConfig overrides.',  ()=> {
 
         lab.test('a config/bind override is respected', (done) => {
 

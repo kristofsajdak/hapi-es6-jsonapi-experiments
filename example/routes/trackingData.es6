@@ -23,7 +23,8 @@ module.exports = function (server, hh) {
                 hh: {
                     before(req, reply) {
                         var data = req.payload.data
-                        return hh.models['canVariables'].find({'relationships.canVariable': data.relationships.canVariable.data.id}).lean().exec()
+                        return hh.models['canVariables'].find({'relationships.canVariable': data.relationships.canVariable.data.id})
+                            .lean().exec()
                             .then(function (canVariable) {
                                 data.attributes.value = canVariable.scale * canVariable.resolution *
                                     (data.attributes.raw + canVariable.computeOffset)

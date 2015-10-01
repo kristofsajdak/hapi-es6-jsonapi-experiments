@@ -8,7 +8,7 @@ module.exports = function (server, hh)
             code: Joi.string(),
             description: Joi.string()
         }
-    };
+    }
 
     hh.routes.register(brands)
 

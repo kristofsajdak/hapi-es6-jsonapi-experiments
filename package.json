@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "bluebird": "^2.10.1",
+    "boom": "^2.9.0",
     "hapi": "^10.0.0",
     "hapi-swagger": "^2.0.0",
     "hoek": "^2.16.3",

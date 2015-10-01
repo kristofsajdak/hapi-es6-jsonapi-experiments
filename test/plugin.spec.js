@@ -8,7 +8,8 @@ const hh = require('../'),
     uuid = require('node-uuid'),
     mongoose = require('mongoose'),
     Hoek = require('hoek'),
-    converters = hh.converters
+    converters = hh.converters,
+    Boom = require('boom')
 
 chai.use(require('chai-things'))
 
@@ -125,7 +126,72 @@ lab.experiment('plugin', ()=> {
                 done()
             })
         })
+
+        lab.test('fail in before with Boom outputs a jsonapi error', (done)=> {
+
+            var hh = server.plugins.hh;
+
+            const route = hh.routes.post(schema, {
+                config: {
+                    plugins: {
+                        hh: {
+                            before: (req, reply) => {
+                                reply(Boom.badRequest('Fail'))
+                            }
+                        }
+                    }
+                }
+            })
+            server.route(route)
+
+            server.inject({url: `/brands`, method: 'POST', payload: {data: {}}}, function (res) {
+                expect(res.statusCode).to.equal(400)
+                expect(res.result.errors).to.not.be.undefined
+                expect(res.result.errors[0]).to.deep.equal({
+                    title: 'Bad Request',
+                    status: 400,
+                    detail: 'Fail'
+                })
+
+                done()
+            })
+        })
+
+        lab.test('fail unexpected error in before outputs a jsonapi error', (done)=> {
+
+            var hh = server.plugins.hh;
+
+            const route = hh.routes.post(schema, {
+                config: {
+                    plugins: {
+                        hh: {
+                            before: (req, reply) => {
+                                throw new Error()
+                            }
+                        }
+                    }
+                }
+            })
+            server.route(route)
+
+            server.inject({url: `/brands`, method: 'POST', payload: {data: {}}}, function (res) {
+                expect(res.statusCode).to.equal(500)
+                expect(res.result.errors).to.not.be.undefined
+                expect(res.result.errors[0]).to.deep.equal({
+                    title: 'Internal Server Error',
+                    status: 500,
+                    detail: 'An internal server error occurred'
+                })
+
+                done()
+            })
+        })
+
+
+
     })
+
+
 })
 
 function loadPlugin(server, callback) {

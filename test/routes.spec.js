@@ -9,11 +9,22 @@ const hhroutes = require('../lib/routes'),
 
 var lab = exports.lab = Lab.script()
 
-const schema = {
+const brandsSchema = {
     type: 'brands',
     attributes: {
         code: Joi.string().min(2).max(10),
         description: Joi.string()
+    }
+}
+
+const seriesSchema = {
+    type: 'series',
+    attributes: {
+        code: Joi.string().min(2).max(10),
+        description: Joi.string()
+    },
+    relationships: {
+        brand: 'brands'
     }
 }
 
@@ -25,7 +36,7 @@ lab.experiment('routes.get is invoked with an hh schema and noop handler,', ()=>
         reply()
     }
 
-    const route = routes.get(schema, {handler})
+    const route = routes.get(brandsSchema, {handler})
 
     lab.experiment('the route config/validate section', ()=> {
 
@@ -96,13 +107,27 @@ const validBrand = {
     }
 }
 
-lab.experiment('post is invoked with an hh schema and noop handler,', ()=> {
+const validSeries = {
+    data: {
+        type: 'series',
+        attributes: {
+            code: 'M1'
+        },
+        relationships: {
+            brand: {
+                data: {type: 'brands', id: uuid.v4()}
+            }
+        }
+    }
+}
+
+lab.experiment('routes.post is invoked with an hh schema and noop handler,', ()=> {
 
     function handler(req, reply) {
         reply('').code(201)
     }
 
-    const route = routes.post(schema, {handler})
+    const route = routes.post(seriesSchema, {handler})
 
     lab.experiment('the route config/validate section', ()=> {
 
@@ -114,13 +139,20 @@ lab.experiment('post is invoked with an hh schema and noop handler,', ()=> {
         })
 
         lab.test('is defined with an id', (done)=> {
-            expect(payload.data.attributes.id).to.not.be.undefined
+            expect(payload.data.id).to.not.be.undefined
             done()
         })
 
         lab.test('is defined with all schema attributes', (done)=> {
             expect(payload.data.attributes.code).to.not.be.undefined
             expect(payload.data.attributes.description).to.not.be.undefined
+            done()
+        })
+
+        lab.test('is defined with relationships', (done)=> {
+            expect(payload.data.relationships).to.not.be.undefined
+            expect(payload.data.relationships.brand).to.not.be.undefined
+            expect(payload.data.relationships.brand.data).to.not.be.undefined
             done()
         })
     })
@@ -130,31 +162,64 @@ lab.experiment('post is invoked with an hh schema and noop handler,', ()=> {
         const server = buildServer(route);
 
         lab.test('post with a valid payload passes validation', (done)=> {
-            server.inject({url: '/brands', method: 'POST', payload: validBrand}, function (res) {
+            server.inject({url: '/series', method: 'POST', payload: validSeries}, function (res) {
+                console.log(res.payload)
                 expect(res.statusCode).to.equal(201)
                 done()
             })
         })
 
         lab.test('post with a valid payload and a client generated id passes validation', (done)=> {
-            const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.id', uuid.v4())
-            server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
+            const seriesWithClientGenId = _.chain(validSeries).cloneDeep().set('data.id', uuid.v4())
+            server.inject({url: '/series', method: 'POST', payload: seriesWithClientGenId}, function (res) {
                 expect(res.statusCode).to.equal(201)
                 done()
             })
         })
 
         lab.test('post with non declared attribute fails validation', (done)=> {
-            const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.bogus', 'foobar')
-            server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
+            const invalidSeries = _.chain(validBrand).cloneDeep().set('data.attributes.bogus', 'foobar')
+            server.inject({url: '/series', method: 'POST', payload: invalidSeries}, function (res) {
                 expect(res.statusCode).to.equal(400)
                 done()
             })
         })
 
         lab.test('post with an invalid attribute value fails validation', (done)=> {
-            const invalidBrand = _.chain(validBrand).cloneDeep().set('data.attributes.code', 'M')
-            server.inject({url: '/brands', method: 'POST', payload: invalidBrand}, function (res) {
+            const invalidSeries = _.chain(validSeries).cloneDeep().set('data.attributes.code', 'M')
+            server.inject({url: '/series', method: 'POST', payload: invalidSeries}, function (res) {
+                expect(res.statusCode).to.equal(400)
+                done()
+            })
+        })
+
+        lab.test('post with an invalid relationship key fails validation', (done)=> {
+            const invalidSeries = _.chain(validSeries).cloneDeep().set('data.relationships.bogus', {})
+            server.inject({url: '/series', method: 'POST', payload: invalidSeries}, function (res) {
+                expect(res.statusCode).to.equal(400)
+                done()
+            })
+        })
+
+        lab.test('post with an incorrect relationship data/type value fails validation', (done)=> {
+            const invalidSeries = _.chain(validSeries).cloneDeep().set('data.relationships.brand.data', {type: 'bogus'})
+            server.inject({url: '/series', method: 'POST', payload: invalidSeries}, function (res) {
+                expect(res.statusCode).to.equal(400)
+                done()
+            })
+        })
+
+        lab.test('post with an non uuid relationship data/id value fails validation', (done)=> {
+            const invalidSeries = _.chain(validSeries).cloneDeep().set('data.relationships.brand.data', {id: 'bogus'})
+            server.inject({url: '/series', method: 'POST', payload: invalidSeries}, function (res) {
+                expect(res.statusCode).to.equal(400)
+                done()
+            })
+        })
+
+        lab.test('post with an uuid relationship data/id array value where a single value is expected fails validation', (done)=> {
+            const invalidSeries = _.chain(validSeries).cloneDeep().set('data.relationships.brand.data', [{type: 'brands', id: uuid.v4()}])
+            server.inject({url: '/series', method: 'POST', payload: invalidSeries}, function (res) {
                 expect(res.statusCode).to.equal(400)
                 done()
             })
@@ -164,30 +229,30 @@ lab.experiment('post is invoked with an hh schema and noop handler,', ()=> {
 
 })
 
-lab.experiment('routes.post is invoked with a schema, handler and routeConfig overrides.',  ()=> {
+lab.experiment('routes.post is invoked with a schema, handler and routeConfig overrides.', ()=> {
 
-        lab.test('a config/bind override is respected', (done) => {
+    lab.test('a config/bind override is respected', (done) => {
 
-            function handler(req, reply) {
-                reply(this.message).code(201)
-            }
+        function handler(req, reply) {
+            reply(this.message).code(201)
+        }
 
-            var route = routes.post(schema, {
-                handler,
-                config: {
-                    bind: {
-                        message: 'foobar'
-                    }
+        var route = routes.post(brandsSchema, {
+            handler,
+            config: {
+                bind: {
+                    message: 'foobar'
                 }
-            })
-
-            const server = buildServer(route);
-
-            server.inject({url: '/brands', method: 'POST', payload: validBrand}, function (res) {
-                expect(res.result).to.equal('foobar')
-                done()
-            })
+            }
         })
+
+        const server = buildServer(route);
+
+        server.inject({url: '/brands', method: 'POST', payload: validBrand}, function (res) {
+            expect(res.result).to.equal('foobar')
+            done()
+        })
+    })
 })
 
 function buildServer(route) {

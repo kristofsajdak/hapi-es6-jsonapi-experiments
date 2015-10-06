@@ -69,12 +69,13 @@ lab.experiment('plugin', ()=> {
 
     lab.experiment('register an hh get route,', ()=> {
 
-        lab.test('query a brand with a code', (done)=> {
+        var createdBrand;
 
+        lab.beforeEach((done)=> {
             var hh = server.plugins.hh;
 
-            const route = hh.routes.get(schema)
-            server.route(route)
+            server.route(hh.routes.get(schema))
+            server.route(hh.routes.getById(schema))
 
             const mf = {
                 attributes: {
@@ -84,21 +85,43 @@ lab.experiment('plugin', ()=> {
             };
 
             const Brands = hh.models.brands
-            Brands.remove()
+            return Brands.remove()
                 .then(()=> {
                     return Brands.create(mf)
                 })
-                .then((created)=> {
-                    server.inject({url: `/brands?code=MF`}, function (res) {
-                        expect(res.statusCode).to.equal(200)
-                        var data = res.result.data[0];
-                        expect(data.id).to.equal(created._id)
-                        expect(data.attributes).to.deep.equal(mf.attributes)
-                        done()
-                    })
+                .then((created) => {
+                    createdBrand = created
+                    done()
                 })
+        })
 
 
+        lab.test('query a brand with a code', (done)=> {
+
+            server.inject({url: `/brands?code=MF`}, function (res) {
+
+                expect(res.statusCode).to.equal(200)
+                var data = res.result.data[0];
+                expect(data.id).to.equal(createdBrand._id)
+                expect(data.attributes.code).to.equal(createdBrand.attributes.code)
+                expect(data.attributes.description).to.equal(createdBrand.attributes.description)
+
+                done()
+            })
+        })
+
+        lab.test('query a brand by id', (done)=> {
+
+            server.inject({url: `/brands/${createdBrand._id}`}, function (res) {
+
+                expect(res.statusCode).to.equal(200)
+                var data = res.result.data[0];
+                expect(data.id).to.equal(createdBrand._id)
+                expect(data.attributes.code).to.equal(createdBrand.attributes.code)
+                expect(data.attributes.description).to.equal(createdBrand.attributes.description)
+
+                done()
+            })
         })
     })
 
@@ -186,7 +209,6 @@ lab.experiment('plugin', ()=> {
                 done()
             })
         })
-
 
 
     })

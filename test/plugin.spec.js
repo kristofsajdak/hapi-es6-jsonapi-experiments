@@ -84,7 +84,7 @@ lab.experiment('plugin', ()=> {
                 }
             };
 
-            const Brands = hh.models.brands
+            const Brands = hh.adapter.models.brands
             return Brands.remove()
                 .then(()=> {
                     return Brands.create(mf)
@@ -217,7 +217,8 @@ lab.experiment('plugin', ()=> {
 })
 
 function loadPlugin(server, callback) {
-    server.register({register: require('../lib/plugin'), options: {mongodbUrl: 'mongodb://localhost/test'}}, callback)
+    var adapter = require('../lib/mongodb-adapter')({mongodbUrl: 'mongodb://localhost/test'})
+    server.register({register: require('../lib/plugin'), options: {adapter: adapter}}, callback)
 }
 
 function buildServer() {

@@ -48,13 +48,13 @@ lab.experiment('routes.get is invoked with an hh schema and noop handler,', ()=>
         })
 
         lab.test('is defined with an id', (done)=> {
-            expect(query.id).to.not.be.undefined
+            expect(query.filter.id).to.not.be.undefined
             done()
         })
 
         lab.test('is defined with all schema attributes', (done)=> {
-            expect(query.code).to.not.be.undefined
-            expect(query.description).to.not.be.undefined
+            expect(query.filter.code).to.not.be.undefined
+            expect(query.filter.description).to.not.be.undefined
             done()
         })
 
@@ -65,28 +65,28 @@ lab.experiment('routes.get is invoked with an hh schema and noop handler,', ()=>
         const server = buildServer(route)
 
         lab.test('query with a valid id passes validation', (done)=> {
-            server.inject(`/brands?id=${uuid.v4()}`, function (res) {
+            server.inject(`/brands?filter.id=${uuid.v4()}`, function (res) {
                 expect(res.statusCode).to.equal(200)
                 done()
             })
         })
 
         lab.test('query with an invalid id fails validation', (done)=> {
-            server.inject('/brands?id=foobar', function (res) {
+            server.inject('/brands?filter.id=foobar', function (res) {
                 expect(res.statusCode).to.equal(400)
                 done()
             })
         })
 
         lab.test('query with a valid code passes validation', (done)=> {
-            server.inject('/brands?code=1234', function (res) {
+            server.inject('/brands?filter.code=1234', function (res) {
                 expect(res.statusCode).to.equal(200)
                 done()
             })
         })
 
         lab.test('query with unknowns parameters passes validation', (done)=> {
-            server.inject('/brands?foo=bar', function (res) {
+            server.inject('/brands?filter.foo=bar', function (res) {
                 expect(res.statusCode).to.equal(200)
                 done()
             })
@@ -163,7 +163,6 @@ lab.experiment('routes.post is invoked with an hh schema and noop handler,', ()=
 
         lab.test('post with a valid payload passes validation', (done)=> {
             server.inject({url: '/series', method: 'POST', payload: validSeries}, function (res) {
-                console.log(res.payload)
                 expect(res.statusCode).to.equal(201)
                 done()
             })

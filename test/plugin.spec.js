@@ -98,7 +98,7 @@ lab.experiment('plugin', ()=> {
 
         lab.test('query a brand with a code', (done)=> {
 
-            server.inject({url: `/brands?code=MF`}, function (res) {
+            server.inject({url: `/brands?filter.code=MF`}, function (res) {
 
                 expect(res.statusCode).to.equal(200)
                 var data = res.result.data[0];

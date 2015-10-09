@@ -42,7 +42,9 @@ lab.experiment('plugin', ()=> {
             reply(req.query.filter.code)
         }
 
-        var routeConfig = {
+        const brandsGet = server.plugins.hh.routes.get(schema)
+
+        server.route(_.merge(brandsGet, {
             handler,
             config: {
                 plugins: {
@@ -54,11 +56,8 @@ lab.experiment('plugin', ()=> {
                     }
                 }
             }
-        };
+        }))
 
-        const route = server.plugins.hh.routes.get(schema, routeConfig)
-
-        server.route(route)
         server.inject({url: `/brands`}, function (res) {
             expect(res.statusCode).to.equal(200)
             expect(res.result).to.equal('MF')
@@ -154,7 +153,8 @@ lab.experiment('plugin', ()=> {
 
             var hh = server.plugins.hh;
 
-            const route = hh.routes.post(schema, {
+            const route = hh.routes.post(schema)
+            server.route(_.merge(route, {
                 config: {
                     plugins: {
                         hh: {
@@ -164,8 +164,7 @@ lab.experiment('plugin', ()=> {
                         }
                     }
                 }
-            })
-            server.route(route)
+            }))
 
             server.inject({url: `/brands`, method: 'POST', payload: {data: {}}}, function (res) {
                 expect(res.statusCode).to.equal(400)
@@ -184,7 +183,8 @@ lab.experiment('plugin', ()=> {
 
             var hh = server.plugins.hh;
 
-            const route = hh.routes.post(schema, {
+            const route = hh.routes.post(schema)
+            server.route(_.merge(route, {
                 config: {
                     plugins: {
                         hh: {
@@ -194,8 +194,7 @@ lab.experiment('plugin', ()=> {
                         }
                     }
                 }
-            })
-            server.route(route)
+            }))
 
             server.inject({url: `/brands`, method: 'POST', payload: {data: {}}}, function (res) {
                 expect(res.statusCode).to.equal(500)

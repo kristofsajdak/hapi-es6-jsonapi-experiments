@@ -16,7 +16,9 @@ module.exports = function (server, hh) {
 
     server.route(hh.routes.get(trackingData))
 
-    const trackingDataPostRoute = hh.routes.post(trackingData, {
+    const trackingDataPost = hh.routes.post(trackingData)
+
+    server.route(_.merge(trackingDataPost, {
         auth: false,
         config: {
             plugins: {
@@ -35,8 +37,6 @@ module.exports = function (server, hh) {
             }
         }
     })
-
-    server.route(trackingDataPostRoute)
 
 
 }

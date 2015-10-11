@@ -40,7 +40,7 @@ server.register({
 ```js
 
 // as simple can be, routes.get generates a hapi route definition
-// ootb this comes with a validate block, and a handler which delegates work to the configgured adapter
+// ootb this comes with a validate block, and a handler which delegates work to the configured adapter
 { method: 'GET',
   path: '/series',
   config: { 

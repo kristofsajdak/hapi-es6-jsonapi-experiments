@@ -3,7 +3,6 @@ Experiments with an es6 hapi stack to accelerate development of jsonapi 1.0 endp
 
 ## usage 
 
-
 ```js
 const hhPlugin = require('hapi-harvester')
 
@@ -36,9 +35,12 @@ server.register({
 })
 ```
 
+
+
 ```js
 
-// routes.get generates a plain hapi route definition
+// as simple can be, routes.get generates a hapi route definition
+// ootb this comes with a validate block, and a handler which delegates work to the configgured adapter
 { method: 'GET',
   path: '/series',
   config: { 
@@ -58,7 +60,7 @@ server.register({
     },
     handler: [Function] }
     
-// add, remove, change route definition properties before registering it as a route 
+// add, remove, change your own properties before registering it as a route 
 server.route(_.merge(brandsGet, {
         config: {
             auth: false, // skip authentication

@@ -142,6 +142,7 @@ lab.experiment('plugin', ()=> {
 
             server
                 .inject({url: `/brands`, method: 'POST', payload: {data: mf}}, function (res) {
+                    console.log(res.result)
                 expect(res.statusCode).to.equal(201)
                 expect(res.result.data.id).to.not.be.undefined
                 expect(res.result.data.attributes).to.deep.equal(mf.attributes)

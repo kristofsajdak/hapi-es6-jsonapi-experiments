@@ -36,7 +36,7 @@ lab.experiment('routes.get is invoked with an hh schema and noop handler,', ()=>
         reply()
     }
 
-    const route = routes.get(brandsSchema, {handler})
+    const route = _.merge(routes.get(brandsSchema), {handler})
 
     lab.experiment('the route config/validate section', ()=> {
 
@@ -127,7 +127,7 @@ lab.experiment('routes.post is invoked with an hh schema and noop handler,', ()=
         reply('').code(201)
     }
 
-    const route = routes.post(seriesSchema, {handler})
+    const route = _.merge(routes.post(seriesSchema), {handler})
 
     lab.experiment('the route config/validate section', ()=> {
 
@@ -236,7 +236,7 @@ lab.experiment('routes.post is invoked with a schema, handler and routeConfig ov
             reply(this.message).code(201)
         }
 
-        var route = routes.post(brandsSchema, {
+        var route = _.merge(routes.post(brandsSchema), {
             handler,
             config: {
                 bind: {

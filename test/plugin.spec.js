@@ -181,6 +181,27 @@ lab.experiment('plugin', ()=> {
             })
         })
 
+
+        lab.test('fail validation outputs a jsonapi error', (done)=> {
+
+            var hh = server.plugins.hh;
+
+            const route = hh.routes.post(schema)
+            server.route(route)
+
+            server.inject({url: `/brands`, method: 'POST', payload: {data: {foo: 'bar'}}}, function (res) {
+                expect(res.statusCode).to.equal(400)
+                expect(res.result.errors).to.not.be.undefined
+                expect(res.result.errors[0]).to.deep.equal({
+                    title: 'Bad Request',
+                    status: 400,
+                    detail: 'child "data" fails because ["foo" is not allowed]'
+                })
+
+                done()
+            })
+        })
+
         lab.test('fail unexpected error in before outputs a jsonapi error', (done)=> {
 
             var hh = server.plugins.hh;

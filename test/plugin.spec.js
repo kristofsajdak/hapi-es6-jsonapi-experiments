@@ -77,16 +77,18 @@ lab.experiment('plugin', ()=> {
             server.route(hh.routes.getById(schema))
 
             const mf = {
-                attributes: {
-                    code: 'MF',
-                    description: 'Massey Furgeson'
+                data: {
+                    attributes: {
+                        code: 'MF',
+                        description: 'Massey Furgeson'
+                    }
                 }
-            };
+            }
 
             const Brands = hh.adapter.models.brands
             return Brands.remove()
                 .then(()=> {
-                    return Brands.create(mf)
+                    return hh.adapter.create('brands', mf)
                 })
                 .then((created) => {
                     createdBrand = created
@@ -98,27 +100,15 @@ lab.experiment('plugin', ()=> {
         lab.test('query a brand with a code', (done)=> {
 
             server.inject({url: `/brands?filter.code=MF`}, function (res) {
-
-                expect(res.statusCode).to.equal(200)
-                var data = res.result.data[0];
-                expect(data.id).to.equal(createdBrand._id)
-                expect(data.attributes.code).to.equal(createdBrand.attributes.code)
-                expect(data.attributes.description).to.equal(createdBrand.attributes.description)
-
+                expect(res.result.data[0]).to.deep.equal(createdBrand.data)
                 done()
             })
         })
 
         lab.test('query a brand by id', (done)=> {
 
-            server.inject({url: `/brands/${createdBrand._id}`}, function (res) {
-
-                expect(res.statusCode).to.equal(200)
-                var data = res.result.data[0];
-                expect(data.id).to.equal(createdBrand._id)
-                expect(data.attributes.code).to.equal(createdBrand.attributes.code)
-                expect(data.attributes.description).to.equal(createdBrand.attributes.description)
-
+            server.inject({url: `/brands/${createdBrand.data.id}`}, function (res) {
+                expect(res.result.data[0]).to.deep.equal(createdBrand.data)
                 done()
             })
         })
@@ -134,21 +124,23 @@ lab.experiment('plugin', ()=> {
             server.route(route)
 
             const mf = {
-                attributes: {
-                    code: 'MF',
-                    description: 'Massey Furgeson'
+                data: {
+                    attributes: {
+                        code: 'MF',
+                        description: 'Massey Furgeson'
+                    }
                 }
-            };
+            }
 
             server
-                .inject({url: `/brands`, method: 'POST', payload: {data: mf}}, function (res) {
+                .inject({url: `/brands`, method: 'POST', payload: mf}, function (res) {
                     console.log(res.result)
-                expect(res.statusCode).to.equal(201)
-                expect(res.result.data.id).to.not.be.undefined
-                expect(res.result.data.attributes).to.deep.equal(mf.attributes)
+                    expect(res.statusCode).to.equal(201)
+                    expect(res.result.data.id).to.not.be.undefined
+                    expect(res.result.data.attributes).to.deep.equal(mf.data.attributes)
 
-                done()
-            })
+                    done()
+                })
         })
 
         lab.test('fail in before with Boom outputs a jsonapi error', (done)=> {

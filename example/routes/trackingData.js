@@ -1,4 +1,5 @@
-const Joi = require('joi')
+const Joi = require('joi'),
+    _ = require('lodash')
 
 module.exports = function (server, hh) {
 
@@ -19,8 +20,8 @@ module.exports = function (server, hh) {
     const trackingDataPost = hh.routes.post(trackingData)
 
     server.route(_.merge(trackingDataPost, {
-        auth: false,
         config: {
+            auth: false,
             plugins: {
                 hh: {
                     before(req, reply) {
@@ -36,7 +37,7 @@ module.exports = function (server, hh) {
                 }
             }
         }
-    })
+    }))
 
 
 }

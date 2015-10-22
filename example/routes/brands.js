@@ -1,4 +1,5 @@
-const Joi = require('joi')
+const Joi = require('joi'),
+    _ = require('lodash')
 
 module.exports = function (server, hh) {
     var brands = {

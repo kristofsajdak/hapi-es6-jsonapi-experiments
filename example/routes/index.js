@@ -10,6 +10,6 @@ module.exports = function (server) {
     ]
 
     _.each(routes, (route) => {
-        require(route)(server, hh)
+        require(`./${route}`)(server, hh)
     })
 }

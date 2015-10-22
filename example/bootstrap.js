@@ -1,7 +1,9 @@
-var hh = require('hapi-harvester');
+var hh = require('../lib/plugin'),
+    A = require('joi'),
+    Hapi = require('hapi')
 
-var A = require('joi');
-var server = require('hapi');
+var server = new Hapi.Server()
+server.connection({port: 3000})
 
 const adapter = require('../lib/mongodb-adapter')({mongodbUrl: 'mongodb://localhost/test'})
 
@@ -14,7 +16,10 @@ server.register({
         // ...
     }
 }, function (err) {
-    require('routes')(server)
+    require('./routes')(server)
+    server.start(function () {
+        console.log('Server running at:', server.info.uri);
+    })
 })
 
 

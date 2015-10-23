@@ -1,6 +1,6 @@
 # hapi-es6-jsonapi-experiments
-Experiments with an es6 hapi stack to accelerate development of jsonapi 1.0 endpoints
-This prototype is being continued in [hapi-harvester](https://github.com/agco/hapi-harvester) 
+
+Prototype for [hapi-harvester](https://github.com/agco/hapi-harvester) 
 
 ## usage 
 
